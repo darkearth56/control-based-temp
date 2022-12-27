@@ -1,0 +1,137 @@
+blueprint:
+  name: Automatic Fan Control based on Presence and Temperature
+  description: |
+    ## Fan ON/OFF Automation based on temperature, presence and outside temperature.
+
+    Fan turns on if the following conditions are met:
+      temperature inside greater than your set threshold value
+      & room/area is occupied
+      & temperature outside is lower than your set maximum value (to prevent turning the fan on in winter)
+
+    Fan turns off if the following conditions are met:
+      temperature inside is lower than your threshold value minus the hystersis value
+      room/area is not occupied
+    
+    What the automation **NOT** observes:
+      manual fan control. Adapt the given values too your needs.
+      If you manually turn the fan on and the inside temperature is below the threshold your fan will turn off soon.
+
+    What you need:
+      a fan entity. if you control your fan via a switch entity (via smart plug for example) you can create a template fan entity.
+      sensor entities for inside and outside temperature. (if you want to use the weather domain than create a template sensor from the temp attribute)
+      occupation binary sensor entity for presence detection.
+
+  domain: automation
+  input:
+    fan:
+      name: Fan
+      description: Fan to control
+      selector:
+        target:
+          entity:
+            domain: fan
+    temp_inside:
+      name: Temperature Inside
+      description: 'Temperature to track inside your house'
+      selector:
+        entity:
+          domain: sensor
+          device_class: temperature
+
+    temp_outside:
+      name: Temperature Outside
+      description: 'Temperature outside to prevent to turn on the fan in winter for example'
+      selector:
+        entity:
+          domain: sensor
+          device_class: temperature
+
+    presence_sensor:
+      name: Presence Sensor
+      description: 'Only turn on Fan if this area is occupied'
+      selector:
+        entity:
+          domain: binary_sensor
+          device_class: occupancy
+
+    temp_outside_min:
+      name: Outside temperature
+      description: 'outside temperature that must be reached to turn on the fan (to prevent the fan to be turned on in winter)'
+      selector:
+        number:
+          min: 0
+          max: 150
+          step: 0.5
+          unit_of_measurement: °C
+
+    temp_threshold_inside:
+      name: Inside temperature threshold
+      description: 'inside threshold temperature that must be reached to turn on the fan'
+      selector:
+        number:
+          min: 0
+          max: 150
+          step: 0.5
+          unit_of_measurement: °C
+
+    hysteresis:
+      name: Hysteresis
+      description: 'The difference the observed value must be lower than the threshold value before the fan is turned off'
+      selector:
+        number:
+          min: 0.5
+          max: 30
+          step: 0.5
+          unit_of_measurement: °C
+
+variables:
+  fan: !input fan
+  temp_inside_entity: !input temp_inside
+  temp_inside: "{{ states[temp_inside_entity].state }}"
+  temp_outside_entity: !input temp_outside
+  temp_outside: "{{ states[temp_outside_entity].state }}"
+  presence_sensor: !input presence_sensor
+  temp_threshold_inside: !input temp_threshold_inside
+  temp_outside_min: !input temp_outside_min
+  hysteresis: !input hysteresis
+
+max_exceeded: silent
+trigger:
+- platform: state
+  entity_id: !input temp_inside
+- platform: state
+  entity_id: !input temp_outside
+- platform: state
+  entity_id: !input presence_sensor
+condition: []
+action:
+- choose:
+  - conditions:
+    - alias: "temp inside greater than temp threshold value"
+      condition: template
+      value_template: >
+        {{ temp_inside|float > temp_threshold_inside|float }}
+    - alias: "temp outside greater than outside min temp"
+      condition: template
+      value_template: >
+        {{ temp_outside|float > temp_outside_min|float }}
+    - condition: state
+      entity_id: !input presence_sensor
+      state: 'on'
+    sequence:
+    - service: homeassistant.turn_on
+      target: !input fan
+  - conditions:
+    - condition: or
+      conditions:
+      - condition: state
+        entity_id: !input presence_sensor
+        state: 'off'
+      - condition: template
+        value_template: >
+          {{ (temp_threshold_inside - hysteresis)|float > temp_inside|float }}
+    sequence:
+    - service: homeassistant.turn_off
+      target: !input fan
+  default: []
+mode: single
