@@ -4,7 +4,7 @@ Device ON/OFF Automation based on temperature, outside temperature.
 
 Device turns on if the following conditions are met:
 
-temperature inside lover than your set threshold value
+temperature inside lower than your set threshold value
 temperature outside is higher than your set maximum value (to prevent turning the device on)
 
 Device turns on if the following conditions are met:
