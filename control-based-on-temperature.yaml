@@ -1,18 +1,17 @@
 blueprint:
   name: Automatic Devce Control based on Temperature
   description: "## Device ON/OFF Automation based on temperature, outside\
-    \ temperature.\n\nFan turns on if the following conditions are met:\n  temperature\
-    \ inside greater than your set threshold value\n 
-    \ temperature outside is lower than your set maximum value (to prevent turning\
-    \ the fan on in winter)\n\nFan turns off if the following conditions are met:\n\
-    \  temperature inside is lower than your threshold value minus the hystersis value\n\
-    \  What the automation **NOT** observes:\n  manual\
-    \ fan control. Adapt the given values too your needs.\n  If you manually turn\
-    \ the fan on and the inside temperature is below the threshold your fan will turn\
-    \ off soon.\n\nWhat you need:\n  a fan entity. if you control your fan via a switch\
-    \ entity (via smart plug for example) you can create a template fan entity.\n\
-    \  sensor entities for inside and outside temperature. (if you want to use the\
-    \ weather domain than create a template sensor from the temp attribute)\n"
+    \ temperature.\n\nDevice turns on if the following conditions are met:\n  temperature\
+    \ inside lower than your set threshold value\n 
+    \ temperature outside is higher than your set maximum value (to prevent turning\
+    \ the devuce on)\n\nDevice turns on if the following conditions are met:\n\
+    \ temperature inside is lower than your threshold value minus the hystersis value\n\
+    \ manual\
+    \ device control. Adapt the given values too your needs.\n  If you manually turn\
+    \ the device on and the inside temperature is above the threshold your device will turn\
+    \ off.\n\nWhat you need:\n  a device entity. if you control your device via a switch\
+    \ entity (via smart plug for example) you can create a template device entity.\n\
+    \  sensor entities for inside and outside temperature.\n"
   domain: automation
   input:
     fan:
