@@ -1,5 +1,5 @@
 blueprint:
-  name: Automatic Device Control based on Temperature
+  name: Automatic Devce Control based on Temperature
   description: "## Device ON/OFF Automation based on temperature, outside\
     \ temperature.\n\nFan turns on if the following conditions are met:\n  temperature\
     \ inside greater than your set threshold value\n 
@@ -12,8 +12,7 @@ blueprint:
     \ off soon.\n\nWhat you need:\n  a fan entity. if you control your fan via a switch\
     \ entity (via smart plug for example) you can create a template fan entity.\n\
     \  sensor entities for inside and outside temperature. (if you want to use the\
-    \ weather domain than create a template sensor from the temp attribute)\n
-
+    \ weather domain than create a template sensor from the temp attribute)\n"
   domain: automation
   input:
     fan:
@@ -25,14 +24,14 @@ blueprint:
             domain: fan
     temp_inside:
       name: Temperature Inside
-      description: Temperature to track inside your house
+      description: Temperature to track inside
       selector:
         entity:
           domain: sensor
           device_class: temperature
     temp_outside:
       name: Temperature Outside
-      description: Temperature outside to prevent to turn on the fan in winter for
+      description: Temperature outside to prevent to turn on the fan for
         example. Set to same Temperature Inside entity if you don't want to use it
       selector:
         entity:
@@ -40,8 +39,8 @@ blueprint:
           device_class: temperature
     temp_outside_min:
       name: Outside temperature
-      description: outside temperature that must be reached to turn on the fan (to
-        prevent the fan to be turned on in winter). Set to 0 to disable
+      description: outside temperature to prevent device turn on (set to 
+        to 0 to disable).
       selector:
         number:
           min: 0.0
@@ -51,8 +50,8 @@ blueprint:
           mode: slider
     temp_threshold_inside:
       name: Inside temperature threshold
-      description: inside threshold temperature that must be reached to turn on the
-        fan
+      description: inside threshold temperature that must be reached to turn off the
+        device
       selector:
         number:
           min: 0.0
@@ -62,8 +61,8 @@ blueprint:
           mode: slider
     hysteresis:
       name: Hysteresis
-      description: The difference the observed value must be lower than the threshold
-        value before the fan is turned off
+      description: The difference the observed value must be higher than the threshold
+        value before the device is turned off
       selector:
         number:
           min: 0.5
