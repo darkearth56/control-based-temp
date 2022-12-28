@@ -16,7 +16,7 @@ What the automation **NOT** observes:
 Manual device control.
 
 Adapt the given values too your needs.
-If you manually turn the device on and the inside temperature is above the threshold your fan will turn off.
+If you manually turn the device on and the inside temperature is above the threshold your device will turn off.
 
 What you need:
 
