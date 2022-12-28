@@ -18,7 +18,7 @@ Manual device control.
 Adapt the given values too your needs.
 If you manually turn the device on and the inside temperature is above the threshold your fan will turn off.
 
-What you need:\
+What you need:
 
 a device entity. if you control your device via a switch entity (via smart plug for example) you can create a template device entity.
 
