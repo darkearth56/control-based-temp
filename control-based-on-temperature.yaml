@@ -1,5 +1,5 @@
 blueprint:
-  name: Automatic Devce Control based on Temperature
+  name: Automatic Device Control based on Temperature
   description: "## Device ON/OFF Automation based on temperature, outside\
     \ temperature.\n\nDevice turns on if the following conditions are met:\n  temperature\
     \ inside lower than your set threshold value\n 
