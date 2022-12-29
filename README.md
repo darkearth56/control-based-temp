@@ -11,8 +11,6 @@ Device turns on if the following conditions are met:
 
 temperature inside is lower than your threshold value minus the hystersis value
 
-What the automation **NOT** observes:
-
 Manual device control.
 
 Adapt the given values too your needs.
@@ -23,3 +21,5 @@ What you need:
 a device entity. if you control your device via a switch entity (via smart plug for example) you can create a template device entity.
 
 sensor entities for inside and outside temperature.
+
+Credit to [fabiosoft](https://community.home-assistant.io/t/automatic-temperature-fan-control/350172)
