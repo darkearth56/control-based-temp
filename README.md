@@ -1,3 +1,10 @@
+I wanted somthing to control a heater in a shed. So when the temperature dropped below and set temp the heater would come on
+and stay on until it reached a set temperature.
+
+Also did not want the heater to come on if the set outside temperature was reached. 
+and the heater was plugged into a plug socket.
+
+
 Automatic Device Control based on Temperature
 
 Device ON/OFF Automation based on temperature, outside temperature.
