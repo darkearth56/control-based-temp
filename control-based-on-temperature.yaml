@@ -89,14 +89,14 @@ condition: []
 action:
 - choose:
   - conditions:
-    - alias: temp inside greater than temp threshold value
+    - alias: temp inside less than temp threshold value
       condition: template
-      value_template: '{{ temp_inside|float < temp_threshold_inside|float }}
+      value_template: '{{ temp_inside|float <= temp_threshold_inside|float }}
 
         '
-    - alias: temp outside greater than outside min temp
+    - alias: temp outside less than outside min temp
       condition: template
-      value_template: '{{ temp_outside|float < temp_outside_min|float }}
+      value_template: '{{ temp_outside|float <= temp_outside_min|float }}
 
         '
     sequence:
@@ -106,7 +106,7 @@ action:
     - condition: or
       conditions:
       - condition: template
-        value_template: '{{ (temp_threshold_inside - hysteresis)|float < temp_inside|float
+        value_template: '{{ (temp_threshold_inside + hysteresis)|float >= temp_inside|float
           }}
 
           '
