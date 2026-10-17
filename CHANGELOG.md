@@ -18,5 +18,7 @@
 - Added `author` and version number.
 - Credit to fabiosoft, author of the original blueprint this is based on, now shown in the blueprint's description inside Home Assistant as well as in the README.
 
+Fixes and documentation for 1.1.0 prepared with help from Claude (Anthropic).
+
 ## 1.0.0
 - Initial release.
