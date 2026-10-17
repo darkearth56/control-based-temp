@@ -1,117 +1,130 @@
 blueprint:
   name: Automatic Device Control based on Temperature
-  description: "## Device ON/OFF Automation based on temperature, outside\
-    \ temperature.\n\nDevice turns on if the following conditions are met:\n  temperature\
-    \ inside lower than your set threshold value\n 
-    \ temperature outside is higher than your set maximum value (to prevent turning\
-    \ the devuce on)\n\nDevice turns on if the following conditions are met:\n\
-    \ temperature inside is lower than your threshold value minus the hystersis value\n\
-    \ manual\
-    \ device control. Adapt the given values too your needs.\n  If you manually turn\
-    \ the device on and the inside temperature is above the threshold your device will turn\
-    \ off.\n\nWhat you need:\n  a device entity. if you control your device via a switch\
-    \ entity (via smart plug for example) you can create a template device entity.\n\
-    \  sensor entities for inside and outside temperature.\n"
+  author: darkearth56
+  description: |
+    ## Device on/off automation based on inside and outside temperature
+
+    **Version 1.1.0** — see [CHANGELOG](https://github.com/darkearth56/control-based-temp/blob/main/CHANGELOG.md)
+
+    The device turns on when both of these are true:
+    - the inside temperature is at or below your inside threshold
+    - the outside temperature is at or below your outside temperature limit
+
+    The device turns off when the inside temperature reaches your inside threshold plus the hysteresis value.
+
+    This also covers manual control: if you turn the device on by hand while the inside temperature is at or above that level, it will be turned off at the next temperature reading. Adjust the values to suit your needs.
+
+    If either temperature sensor is unavailable, nothing is switched until it reports a number again.
+
+    What you need:
+    - a switch, fan, light or input_boolean entity for the device (a smart plug, for example)
+    - temperature sensor entities for inside and outside
   domain: automation
+  source_url: https://github.com/darkearth56/control-based-temp/blob/main/control-based-on-temperature.yaml
+  homeassistant:
+    min_version: 2024.8.0
   input:
     fan:
-      name: Fan
-      description: Fan to control
+      name: Device
+      description: Device to control, for example the smart plug a heater is plugged into.
       selector:
         target:
           entity:
-            domain: fan
+            domain:
+              - switch
+              - fan
+              - light
+              - input_boolean
     temp_inside:
       name: Temperature Inside
-      description: Temperature to track inside
+      description: Inside temperature sensor to track.
       selector:
         entity:
           domain: sensor
           device_class: temperature
     temp_outside:
       name: Temperature Outside
-      description: Temperature outside to prevent to turn on the fan for
-        example. Set to same Temperature Inside entity if you don't want to use it
+      description: Outside temperature sensor, used to stop the device turning on
+        when it is warm outside. Select the inside sensor here too if you don't want to use it.
       selector:
         entity:
           domain: sensor
           device_class: temperature
     temp_outside_min:
-      name: Outside temperature
-      description: outside temperature to prevent device turn on (set to 
-        to 0 to disable).
+      name: Outside temperature limit
+      description: The device will not turn on when the outside temperature is above
+        this value. Set it high (for example 50 °C) if you don't want an outside limit.
       selector:
         number:
-          min: 0.0
-          max: 300.0
+          min: -30.0
+          max: 50.0
           step: 0.5
           unit_of_measurement: °C
           mode: slider
     temp_threshold_inside:
       name: Inside temperature threshold
-      description: inside threshold temperature that must be reached to turn off the
-        device
+      description: The device turns on when the inside temperature is at or below
+        this value.
       selector:
         number:
-          min: 0.0
-          max: 300.0
+          min: -10.0
+          max: 40.0
           step: 0.5
           unit_of_measurement: °C
           mode: slider
     hysteresis:
       name: Hysteresis
-      description: The difference the observed value must be higher than the threshold
-        value before the device is turned off
+      description: How far the inside temperature must rise above the threshold before
+        the device is turned off.
       selector:
         number:
           min: 0.5
-          max: 100.0
+          max: 10.0
           step: 0.5
           unit_of_measurement: °C
           mode: slider
-  source_url: https://github.com/darkearth56/control-based-temp
 variables:
-  fan: !input 'fan'
-  temp_inside_entity: !input 'temp_inside'
-  temp_inside: '{{ states[temp_inside_entity].state }}'
-  temp_outside_entity: !input 'temp_outside'
-  temp_outside: '{{ states[temp_outside_entity].state }}'
-  temp_threshold_inside: !input 'temp_threshold_inside'
-  temp_outside_min: !input 'temp_outside_min'
-  hysteresis: !input 'hysteresis'
+  fan: !input fan
+  temp_inside_entity: !input temp_inside
+  temp_inside: '{{ states(temp_inside_entity) }}'
+  temp_outside_entity: !input temp_outside
+  temp_outside: '{{ states(temp_outside_entity) }}'
+  temp_threshold_inside: !input temp_threshold_inside
+  temp_outside_min: !input temp_outside_min
+  hysteresis: !input hysteresis
 max_exceeded: silent
 trigger:
-- platform: state
-  entity_id: !input 'temp_inside'
-- platform: state
-  entity_id: !input 'temp_outside'
+  - platform: state
+    entity_id: !input temp_inside
+  - platform: state
+    entity_id: !input temp_outside
 condition: []
 action:
-- choose:
-  - conditions:
-    - alias: temp inside less than temp threshold value
-      condition: template
-      value_template: '{{ temp_inside|float <= temp_threshold_inside|float }}
-
-        '
-    - alias: temp outside less than outside min temp
-      condition: template
-      value_template: '{{ temp_outside|float <= temp_outside_min|float }}
-
-        '
-    sequence:
-    - service: homeassistant.turn_on
-      target: !input 'fan'
-  - conditions:
-    - condition: or
-      conditions:
-      - condition: template
-        value_template: '{{ (temp_threshold_inside + hysteresis)|float >= temp_inside|float
-          }}
-
-          '
-    sequence:
-    - service: homeassistant.turn_off
-      target: !input 'fan'
-  default: []
+  - choose:
+      - alias: Turn on when cold inside and not too warm outside
+        conditions:
+          - alias: Inside temperature at or below threshold
+            condition: template
+            value_template: >-
+              {{ temp_inside | float(none) is not none
+                 and temp_inside | float <= temp_threshold_inside | float }}
+          - alias: Outside temperature at or below limit
+            condition: template
+            value_template: >-
+              {{ temp_outside | float(none) is not none
+                 and temp_outside | float <= temp_outside_min | float }}
+        sequence:
+          - action: homeassistant.turn_on
+            target: !input fan
+      - alias: Turn off when inside reaches threshold plus hysteresis
+        conditions:
+          - alias: Inside temperature at or above threshold plus hysteresis
+            condition: template
+            value_template: >-
+              {{ temp_inside | float(none) is not none
+                 and temp_inside | float >= (temp_threshold_inside | float + hysteresis | float) }}
+        sequence:
+          - action: homeassistant.turn_off
+            target: !input fan
+    default: []
 mode: single
