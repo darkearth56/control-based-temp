@@ -19,6 +19,8 @@ blueprint:
     What you need:
     - a switch, fan, light or input_boolean entity for the device (a smart plug, for example)
     - temperature sensor entities for inside and outside
+
+    Based on the original blueprint by [fabiosoft](https://community.home-assistant.io/t/automatic-temperature-fan-control/350172).
   domain: automation
   source_url: https://github.com/darkearth56/control-based-temp/blob/main/control-based-on-temperature.yaml
   homeassistant:

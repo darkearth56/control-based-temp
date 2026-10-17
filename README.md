@@ -78,3 +78,7 @@ If you've edited your local copy of the blueprint, re-importing will replace you
 ## Changes
 
 See [CHANGELOG.md](CHANGELOG.md) for what each version changed and fixed.
+
+## Credit
+
+Based on the "Automatic Fan Control based on Presence and Temperature" blueprint by [fabiosoft](https://community.home-assistant.io/t/automatic-temperature-fan-control/350172), adapted here for heater control with an outside temperature limit.

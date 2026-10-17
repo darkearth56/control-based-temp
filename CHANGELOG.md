@@ -16,6 +16,7 @@
 - "Fan" input relabelled "Device". The input's internal key is still `fan`, so existing automations keep working without changes.
 - Uses `action:` instead of the older `service:` keyword; requires Home Assistant 2024.8 or later.
 - Added `author` and version number.
+- Credit to fabiosoft, author of the original blueprint this is based on, now shown in the blueprint's description inside Home Assistant as well as in the README.
 
 ## 1.0.0
 - Initial release.
