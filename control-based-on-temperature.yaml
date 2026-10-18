@@ -4,7 +4,7 @@ blueprint:
   description: |
     ## Device on/off automation based on inside and outside temperature
 
-    **Version 1.2.1** — see [CHANGELOG](https://github.com/darkearth56/control-based-temp/blob/main/CHANGELOG.md)
+    **Version 1.2.2** — see [CHANGELOG](https://github.com/darkearth56/control-based-temp/blob/main/CHANGELOG.md)
 
     The device turns on when both of these are true:
     - the inside temperature is at or below your inside threshold
@@ -92,8 +92,8 @@ blueprint:
       description: Seconds to wait after switching before checking the device really
         changed. If it hasn't, the command is sent once more. Useful for cloud-controlled
         sockets that are slow to switch or sometimes miss a command (an EcoFlow AC outlet
-        can take 30-60 s to turn off under load). Set to 0 to disable.
-      default: 60
+        takes about 20 s to turn off under load). Set to 0 to disable.
+      default: 30
       selector:
         number:
           min: 0

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.2 — 2026-10-18
+
+### Changed
+- **Confirm delay default lowered from 60 s to 30 s.** An EcoFlow AC outlet was measured taking about 20 s to switch off under load, so 30 s leaves a margin while resending a missed command sooner. Automations that already set their own value keep it.
+
 ## 1.2.1 — 2026-10-18
 
 ### Changed
