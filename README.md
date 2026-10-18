@@ -2,7 +2,7 @@
 
 A Home Assistant blueprint that switches a device on and off from an inside temperature, with an outside temperature limit and hysteresis.
 
-**Current version: 1.2.0** · [Changelog](CHANGELOG.md)
+**Current version: 1.2.1** · [Changelog](CHANGELOG.md)
 
 [![Open your Home Assistant instance and show the blueprint import dialog with this blueprint pre-filled.](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fdarkearth56%2Fcontrol-based-temp%2Fblob%2Fmain%2Fcontrol-based-on-temperature.yaml)
 

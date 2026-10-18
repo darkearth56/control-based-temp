@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.1 — 2026-10-18
+
+### Changed
+- **Confirm delay is now a slider** (0–300 s, 5 s steps) instead of a number box, so it's easier to tune for slow sockets. Default stays at 60 s and existing settings are kept.
+
 ## 1.2.0 — 2026-10-18
 
 ### Added
