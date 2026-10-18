@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.2.0 — 2026-10-18
+
+### Added
+- **Confirm delay with one retry.** After switching the device on or off, the automation waits (default **60 s**) and checks the device really changed. If it didn't, the command is sent once more. This helps with cloud-controlled sockets (for example an EcoFlow AC outlet) that sometimes accept a command but don't act on it. Set the delay to 0 to turn it off and get the 1.1.0 behaviour.
+
+### Notes
+- Existing automations pick up the 60 s default automatically after re-importing; no settings need changing.
+- While the automation is waiting, new temperature readings are ignored (`mode: single`); the next reading after the wait is handled normally.
+
 ## 1.1.0 — 2026-10-17
 
 ### Fixed

@@ -4,7 +4,7 @@ blueprint:
   description: |
     ## Device on/off automation based on inside and outside temperature
 
-    **Version 1.1.0** — see [CHANGELOG](https://github.com/darkearth56/control-based-temp/blob/main/CHANGELOG.md)
+    **Version 1.2.0** — see [CHANGELOG](https://github.com/darkearth56/control-based-temp/blob/main/CHANGELOG.md)
 
     The device turns on when both of these are true:
     - the inside temperature is at or below your inside threshold
@@ -13,6 +13,8 @@ blueprint:
     The device turns off when the inside temperature reaches your inside threshold plus the hysteresis value.
 
     This also covers manual control: if you turn the device on by hand while the inside temperature is at or above that level, it will be turned off at the next temperature reading. Adjust the values to suit your needs.
+
+    After switching, the automation waits for the confirm delay and checks the device actually changed. If it didn't (for example a cloud-controlled socket that missed the command), the command is sent once more. Set the delay to 0 to turn this off.
 
     If either temperature sensor is unavailable, nothing is switched until it reports a number again.
 
@@ -85,6 +87,20 @@ blueprint:
           step: 0.5
           unit_of_measurement: °C
           mode: slider
+    confirm_delay:
+      name: Confirm delay
+      description: Seconds to wait after switching before checking the device really
+        changed. If it hasn't, the command is sent once more. Useful for cloud-controlled
+        sockets that sometimes miss a command. Set to 0 to disable.
+      default: 60
+      selector:
+        number:
+          min: 0
+          max: 300
+          step: 5
+          unit_of_measurement: s
+          mode: box
+
 variables:
   fan: !input fan
   temp_inside_entity: !input temp_inside
@@ -94,13 +110,21 @@ variables:
   temp_threshold_inside: !input temp_threshold_inside
   temp_outside_min: !input temp_outside_min
   hysteresis: !input hysteresis
+  confirm_delay: !input confirm_delay
+  fan_entities: >-
+    {% set e = fan.entity_id if fan is mapping else fan %}
+    {{ [e] if e is string else (e | list) }}
+
 max_exceeded: silent
+
 trigger:
   - platform: state
     entity_id: !input temp_inside
   - platform: state
     entity_id: !input temp_outside
+
 condition: []
+
 action:
   - choose:
       - alias: Turn on when cold inside and not too warm outside
@@ -118,6 +142,20 @@ action:
         sequence:
           - action: homeassistant.turn_on
             target: !input fan
+          - alias: Confirm it turned on, retry once if not
+            if:
+              - condition: template
+                value_template: '{{ confirm_delay | int(0) > 0 }}'
+            then:
+              - delay:
+                  seconds: '{{ confirm_delay | int(0) }}'
+              - if:
+                  - condition: template
+                    value_template: >-
+                      {{ fan_entities | reject('is_state', 'on') | list | count > 0 }}
+                then:
+                  - action: homeassistant.turn_on
+                    target: !input fan
       - alias: Turn off when inside reaches threshold plus hysteresis
         conditions:
           - alias: Inside temperature at or above threshold plus hysteresis
@@ -128,5 +166,20 @@ action:
         sequence:
           - action: homeassistant.turn_off
             target: !input fan
+          - alias: Confirm it turned off, retry once if not
+            if:
+              - condition: template
+                value_template: '{{ confirm_delay | int(0) > 0 }}'
+            then:
+              - delay:
+                  seconds: '{{ confirm_delay | int(0) }}'
+              - if:
+                  - condition: template
+                    value_template: >-
+                      {{ fan_entities | select('is_state', 'on') | list | count > 0 }}
+                then:
+                  - action: homeassistant.turn_off
+                    target: !input fan
     default: []
+
 mode: single
