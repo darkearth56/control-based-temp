@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.3.0 — 2026-10-19
+
+### Added
+- **Damp protection (optional, off by default).** Add one or more humidity sensors and switch on **Damp protection**. The device then also turns on when the dampest sensor reaches **Damp on humidity** (default 75 %) and stays on until it falls to **Damp off humidity** (default 65 %), even if the temperature is already above threshold + hysteresis. **Damp maximum temperature** (default 18 °C) stops it heating forever. Intended for stopping tools rusting in a shed, or mould and botrytis in a greenhouse.
+- **More than one inside temperature sensor (optional).** Add extra inside sensors (for example one near the floor and one near the roof) and choose **Average** or **Lowest** to combine them. Sensors that are unavailable are left out; if all are unavailable nothing is switched.
+
+### Notes
+- Existing automations are unchanged after re-importing: damp protection is off and there are no extra sensors until you add them.
+- Damp protection still respects the outside temperature limit, so it won't heat when it is warmer outside than your limit.
+- If every humidity sensor is unavailable, damp protection is skipped and the device runs on temperature alone.
+- Humidity is used rather than a calculated dew point so that sensors don't need pairing. At a given temperature they measure the same thing: 75 % humidity is roughly 4–5 °C above the dew point, 65 % roughly 6–7 °C.
+
 ## 1.2.2 — 2026-10-18
 
 ### Changed
