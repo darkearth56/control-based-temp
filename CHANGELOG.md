@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.1 — 2026-10-19
+
+### Changed
+- **Credits corrected.** The README gave fabiosoft's name with the title of Sam04's blueprint. This blueprint started in 2022 from Sam04's *Automatic Fan Control based on Presence and Temperature*, and its temperature-only form follows fabiosoft's *Automatic Temperature Fan Control*. Both are now credited, in the README and in the blueprint description inside Home Assistant. No changes to how the blueprint works.
+
 ## 1.3.0 — 2026-10-19
 
 ### Added

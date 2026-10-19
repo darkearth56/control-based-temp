@@ -2,7 +2,7 @@
 
 A Home Assistant blueprint that switches a device on and off from an inside temperature, with an outside temperature limit and hysteresis.
 
-**Current version: 1.3.0** · [Changelog](CHANGELOG.md)
+**Current version: 1.3.1** · [Changelog](CHANGELOG.md)
 
 [![Open your Home Assistant instance and show the blueprint import dialog with this blueprint pre-filled.](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fdarkearth56%2Fcontrol-based-temp%2Fblob%2Fmain%2Fcontrol-based-on-temperature.yaml)
 
@@ -89,4 +89,6 @@ See [CHANGELOG.md](CHANGELOG.md) for what each version changed and fixed.
 
 ## Credit
 
-Based on the "Automatic Fan Control based on Presence and Temperature" blueprint by [fabiosoft](https://community.home-assistant.io/t/automatic-temperature-fan-control/350172), adapted here for heater control with an outside temperature limit.
+Based on [Automatic Fan Control based on Presence and Temperature](https://community.home-assistant.io/t/automatic-fan-control-based-on-presence-and-temperature/310398) by **Sam04** (2021), and on [Automatic Temperature Fan Control](https://community.home-assistant.io/t/automatic-temperature-fan-control/350172) by **fabiosoft** (2021), his temperature-only version of it. Thanks to both.
+
+Their blueprints switch a cooling fan on when it gets hot. This version reverses that for a heater, and adds the outside limit handling, dew point protection, confirm-and-retry and support for switches and smart plugs.

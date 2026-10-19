@@ -4,7 +4,7 @@ blueprint:
   description: |
     ## Device on/off automation based on inside and outside temperature
 
-    **Version 1.3.0** — see [CHANGELOG](https://github.com/darkearth56/control-based-temp/blob/main/CHANGELOG.md)
+    **Version 1.3.1** — see [CHANGELOG](https://github.com/darkearth56/control-based-temp/blob/main/CHANGELOG.md)
 
     The device turns on when the outside temperature is at or below your outside temperature limit and either:
     - the inside temperature is at or below your inside threshold, or
@@ -25,7 +25,7 @@ blueprint:
     - temperature sensor entities for inside and outside
     - optionally, a humidity sensor inside for dew point protection
 
-    Based on the original blueprint by [fabiosoft](https://community.home-assistant.io/t/automatic-temperature-fan-control/350172).
+    Based on [Automatic Fan Control based on Presence and Temperature](https://community.home-assistant.io/t/automatic-fan-control-based-on-presence-and-temperature/310398) by Sam04, and on [Automatic Temperature Fan Control](https://community.home-assistant.io/t/automatic-temperature-fan-control/350172) by fabiosoft, his temperature-only version of it.
   domain: automation
   source_url: https://github.com/darkearth56/control-based-temp/blob/main/control-based-on-temperature.yaml
   homeassistant:
