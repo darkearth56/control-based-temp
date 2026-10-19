@@ -4,7 +4,7 @@ blueprint:
   description: |
     ## Device on/off automation based on inside and outside temperature
 
-    **Version 1.2.2** — see [CHANGELOG](https://github.com/darkearth56/control-based-temp/blob/main/CHANGELOG.md)
+    **Version 1.3.0** — see [CHANGELOG](https://github.com/darkearth56/control-based-temp/blob/main/CHANGELOG.md)
 
     The device turns on when both of these are true:
     - the inside temperature is at or below your inside threshold
@@ -14,13 +14,18 @@ blueprint:
 
     This also covers manual control: if you turn the device on by hand while the inside temperature is at or above that level, it will be turned off at the next temperature reading. Adjust the values to suit your needs.
 
+    **More than one inside sensor (optional):** add extra inside temperature sensors and choose whether to use their average or the lowest reading. Handy for a sensor near the floor and another near the roof.
+
+    **Damp protection (optional, off by default):** add one or more humidity sensors and turn on damp protection. The device is then also turned on when the dampest spot reaches the "damp on" humidity, and kept on until it drops to the "damp off" humidity — even if it is already warm enough. A maximum temperature stops it heating forever. Useful for stopping tools rusting in a shed, or mould and botrytis in a greenhouse.
+
     After switching, the automation waits for the confirm delay and checks the device actually changed. If it didn't (for example a cloud-controlled socket that missed the command), the command is sent once more. Set the delay to 0 to turn this off.
 
-    If either temperature sensor is unavailable, nothing is switched until it reports a number again.
+    If a temperature sensor is unavailable, nothing is switched until it reports a number again (with several inside sensors, the ones still reporting are used). If all humidity sensors are unavailable, damp protection is skipped and the device works on temperature alone.
 
     What you need:
     - a switch, fan, light or input_boolean entity for the device (a smart plug, for example)
     - temperature sensor entities for inside and outside
+    - for damp protection: one or more humidity sensors inside
 
     Based on the original blueprint by [fabiosoft](https://community.home-assistant.io/t/automatic-temperature-fan-control/350172).
   domain: automation
@@ -46,6 +51,29 @@ blueprint:
         entity:
           domain: sensor
           device_class: temperature
+    temp_inside_extra:
+      name: Extra inside temperature sensors (optional)
+      description: More inside temperature sensors, for example one near the floor
+        and one near the roof. Leave empty to use only the sensor above.
+      default: []
+      selector:
+        entity:
+          domain: sensor
+          device_class: temperature
+          multiple: true
+    temp_combine:
+      name: Combine inside temperatures
+      description: How to combine the inside sensors when there is more than one.
+        "Average" uses the mean of all of them. "Lowest" uses the coldest one, which
+        protects the coldest spot. Has no effect with a single inside sensor.
+      default: average
+      selector:
+        select:
+          options:
+            - label: Average
+              value: average
+            - label: Lowest
+              value: lowest
     temp_outside:
       name: Temperature Outside
       description: Outside temperature sensor, used to stop the device turning on
@@ -101,17 +129,105 @@ blueprint:
           step: 5
           unit_of_measurement: s
           mode: slider
+    damp_protection:
+      name: Damp protection
+      description: Also turn the device on when it is too damp inside, using the humidity
+        sensors below. Off by default. When off, the humidity settings are ignored.
+      default: false
+      selector:
+        boolean:
+    humidity_sensors:
+      name: Humidity sensors (damp protection)
+      description: One or more inside humidity sensors. The highest reading (the dampest
+        spot) is used.
+      default: []
+      selector:
+        entity:
+          domain: sensor
+          device_class: humidity
+          multiple: true
+    damp_rh_on:
+      name: Damp on humidity
+      description: Turn the device on when the dampest sensor is at or above this
+        humidity. Steel starts to rust from about 65–70 %. For a greenhouse, 85 % is
+        a common choice.
+      default: 75
+      selector:
+        number:
+          min: 40
+          max: 100
+          step: 1
+          unit_of_measurement: '%'
+          mode: slider
+    damp_rh_off:
+      name: Damp off humidity
+      description: Keep the device on until the dampest sensor is at or below this
+        humidity. Must be lower than "Damp on humidity". For a greenhouse, 75 % is a
+        common choice.
+      default: 65
+      selector:
+        number:
+          min: 30
+          max: 100
+          step: 1
+          unit_of_measurement: '%'
+          mode: slider
+    damp_max_temp:
+      name: Damp maximum temperature
+      description: Damp protection never heats above this inside temperature, so the
+        device can't run forever. If set below threshold + hysteresis, threshold +
+        hysteresis is used instead.
+      default: 18
+      selector:
+        number:
+          min: 0
+          max: 40
+          step: 0.5
+          unit_of_measurement: °C
+          mode: slider
 
 variables:
   fan: !input fan
   temp_inside_entity: !input temp_inside
-  temp_inside: '{{ states(temp_inside_entity) }}'
+  temp_inside_extra: !input temp_inside_extra
+  temp_combine: !input temp_combine
+  temp_inside_entities: >-
+    {% set x = temp_inside_extra %}
+    {% set x = [x] if x is string else (x or []) | list %}
+    {{ ([temp_inside_entity] + x) | unique | list }}
+  temp_inside_values: >-
+    {{ temp_inside_entities | map('states') | map('float', none) | reject('none') | list }}
+  temp_inside: >-
+    {% set v = temp_inside_values %}
+    {% if v | count == 0 %}unavailable
+    {% elif temp_combine == 'lowest' %}{{ v | min }}
+    {% else %}{{ (v | sum / v | count) | round(2) }}{% endif %}
   temp_outside_entity: !input temp_outside
   temp_outside: '{{ states(temp_outside_entity) }}'
   temp_threshold_inside: !input temp_threshold_inside
   temp_outside_min: !input temp_outside_min
   hysteresis: !input hysteresis
   confirm_delay: !input confirm_delay
+  damp_protection: !input damp_protection
+  humidity_sensors: !input humidity_sensors
+  damp_rh_on: !input damp_rh_on
+  damp_rh_off: !input damp_rh_off
+  damp_max_temp: !input damp_max_temp
+  humidity_max: >-
+    {% set x = humidity_sensors %}
+    {% set x = [x] if x is string else (x or []) | list %}
+    {% set v = x | map('states') | map('float', none) | reject('none') | list %}
+    {{ v | max if v | count > 0 else none }}
+  damp_active: >-
+    {{ damp_protection | bool(false) and humidity_max is not none }}
+  temp_off: >-
+    {{ temp_threshold_inside | float + hysteresis | float }}
+  damp_cap: >-
+    {{ [damp_max_temp | float, temp_threshold_inside | float + hysteresis | float] | max }}
+  damp_wants_on: >-
+    {{ damp_active and humidity_max | float >= damp_rh_on | float }}
+  damp_holds_on: >-
+    {{ damp_active and humidity_max | float > damp_rh_off | float }}
   fan_entities: >-
     {% set e = fan.entity_id if fan is mapping else fan %}
     {{ [e] if e is string else (e | list) }}
@@ -122,19 +238,24 @@ trigger:
   - platform: state
     entity_id: !input temp_inside
   - platform: state
+    entity_id: !input temp_inside_extra
+  - platform: state
     entity_id: !input temp_outside
+  - platform: state
+    entity_id: !input humidity_sensors
 
 condition: []
 
 action:
   - choose:
-      - alias: Turn on when cold inside and not too warm outside
+      - alias: Turn on when cold (or damp) inside and not too warm outside
         conditions:
-          - alias: Inside temperature at or below threshold
+          - alias: Inside at or below threshold, or damp and below the damp maximum
             condition: template
             value_template: >-
               {{ temp_inside | float(none) is not none
-                 and temp_inside | float <= temp_threshold_inside | float }}
+                 and (temp_inside | float <= temp_threshold_inside | float
+                      or (damp_wants_on and temp_inside | float < damp_cap | float)) }}
           - alias: Outside temperature at or below limit
             condition: template
             value_template: >-
@@ -157,13 +278,14 @@ action:
                 then:
                   - action: homeassistant.turn_on
                     target: !input fan
-      - alias: Turn off when inside reaches threshold plus hysteresis
+      - alias: Turn off when warm enough (and dry enough, or at the damp maximum)
         conditions:
-          - alias: Inside temperature at or above threshold plus hysteresis
+          - alias: Inside at or above threshold plus hysteresis and not still damp, or at the damp maximum
             condition: template
             value_template: >-
               {{ temp_inside | float(none) is not none
-                 and temp_inside | float >= (temp_threshold_inside | float + hysteresis | float) }}
+                 and ((temp_inside | float >= temp_off | float and not damp_holds_on)
+                      or (damp_active and temp_inside | float >= damp_cap | float)) }}
         sequence:
           - action: homeassistant.turn_off
             target: !input fan
