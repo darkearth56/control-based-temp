@@ -4,13 +4,15 @@ blueprint:
   description: |
     ## Device on/off automation based on inside and outside temperature
 
-    **Version 1.2.2** — see [CHANGELOG](https://github.com/darkearth56/control-based-temp/blob/main/CHANGELOG.md)
+    **Version 1.3.0** — see [CHANGELOG](https://github.com/darkearth56/control-based-temp/blob/main/CHANGELOG.md)
 
-    The device turns on when both of these are true:
-    - the inside temperature is at or below your inside threshold
-    - the outside temperature is at or below your outside temperature limit
+    The device turns on when the outside temperature is at or below your outside temperature limit and either:
+    - the inside temperature is at or below your inside threshold, or
+    - (optional) the inside temperature is within the dew point margin of the inside dew point, so it is at risk of condensation
 
-    The device turns off when the inside temperature reaches your inside threshold plus the hysteresis value.
+    The device turns off when the inside temperature reaches your inside threshold plus the hysteresis value, and (if dew point is used) is at least the dew point margin plus 1 °C above the inside dew point.
+
+    Dew point protection is optional: pick an inside humidity sensor to turn it on. The dew point is calculated from the inside temperature and humidity (Magnus formula). Leave the humidity sensor empty and the blueprint works on temperature only, as before.
 
     This also covers manual control: if you turn the device on by hand while the inside temperature is at or above that level, it will be turned off at the next temperature reading. Adjust the values to suit your needs.
 
@@ -21,6 +23,7 @@ blueprint:
     What you need:
     - a switch, fan, light or input_boolean entity for the device (a smart plug, for example)
     - temperature sensor entities for inside and outside
+    - optionally, a humidity sensor inside for dew point protection
 
     Based on the original blueprint by [fabiosoft](https://community.home-assistant.io/t/automatic-temperature-fan-control/350172).
   domain: automation
@@ -87,6 +90,28 @@ blueprint:
           step: 0.5
           unit_of_measurement: °C
           mode: slider
+    humidity_inside:
+      name: Humidity Inside (optional)
+      description: Inside humidity sensor, used to work out the inside dew point. The
+        device then also turns on when the inside temperature gets close to the dew
+        point, to stop condensation. Leave empty to use temperature only.
+      default: ''
+      selector:
+        entity:
+          domain: sensor
+          device_class: humidity
+    dewpoint_margin:
+      name: Dew point margin
+      description: Turn on when the inside temperature is within this many degrees of
+        the inside dew point. Only used when a humidity sensor is selected.
+      default: 1.5
+      selector:
+        number:
+          min: 0.5
+          max: 5.0
+          step: 0.5
+          unit_of_measurement: °C
+          mode: slider
     confirm_delay:
       name: Confirm delay
       description: Seconds to wait after switching before checking the device really
@@ -112,6 +137,17 @@ variables:
   temp_outside_min: !input temp_outside_min
   hysteresis: !input hysteresis
   confirm_delay: !input confirm_delay
+  hum_entity: !input humidity_inside
+  hum_inside: "{{ states(hum_entity) if hum_entity else 'unknown' }}"
+  dewpoint_margin: !input dewpoint_margin
+  dew_point: >-
+    {% set t = temp_inside | float(none) %}
+    {% set rh = hum_inside | float(none) %}
+    {% if t is not none and rh is not none and 0 < rh <= 100 %}
+      {% set g = log(rh / 100) + 17.62 * t / (243.12 + t) %}
+      {{ (243.12 * g / (17.62 - g)) | round(2) }}
+    {% else %}-999{% endif %}
+  dew_ok: "{{ dew_point | float(-999) > -273 }}"
   fan_entities: >-
     {% set e = fan.entity_id if fan is mapping else fan %}
     {{ [e] if e is string else (e | list) }}
@@ -128,13 +164,14 @@ condition: []
 
 action:
   - choose:
-      - alias: Turn on when cold inside and not too warm outside
+      - alias: Turn on when cold or near the dew point inside, and not too warm outside
         conditions:
-          - alias: Inside temperature at or below threshold
+          - alias: Inside temperature at or below threshold, or close to the inside dew point
             condition: template
             value_template: >-
               {{ temp_inside | float(none) is not none
-                 and temp_inside | float <= temp_threshold_inside | float }}
+                 and (temp_inside | float <= temp_threshold_inside | float
+                      or (dew_ok and temp_inside | float <= dew_point | float + dewpoint_margin | float)) }}
           - alias: Outside temperature at or below limit
             condition: template
             value_template: >-
@@ -157,13 +194,18 @@ action:
                 then:
                   - action: homeassistant.turn_on
                     target: !input fan
-      - alias: Turn off when inside reaches threshold plus hysteresis
+      - alias: Turn off when inside reaches threshold plus hysteresis and is clear of the dew point
         conditions:
           - alias: Inside temperature at or above threshold plus hysteresis
             condition: template
             value_template: >-
               {{ temp_inside | float(none) is not none
                  and temp_inside | float >= (temp_threshold_inside | float + hysteresis | float) }}
+          - alias: Inside temperature clear of the dew point (or dew point not used)
+            condition: template
+            value_template: >-
+              {{ not dew_ok
+                 or temp_inside | float >= dew_point | float + dewpoint_margin | float + 1 }}
         sequence:
           - action: homeassistant.turn_off
             target: !input fan

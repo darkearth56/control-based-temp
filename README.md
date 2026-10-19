@@ -2,7 +2,7 @@
 
 A Home Assistant blueprint that switches a device on and off from an inside temperature, with an outside temperature limit and hysteresis.
 
-**Current version: 1.2.2** · [Changelog](CHANGELOG.md)
+**Current version: 1.3.0** · [Changelog](CHANGELOG.md)
 
 [![Open your Home Assistant instance and show the blueprint import dialog with this blueprint pre-filled.](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fdarkearth56%2Fcontrol-based-temp%2Fblob%2Fmain%2Fcontrol-based-on-temperature.yaml)
 
@@ -14,8 +14,8 @@ I wanted something to control a heater in a shed. When the temperature drops bel
 
 | | Condition |
 |---|---|
-| **Turns on** | Inside temperature is **at or below** your inside threshold **and** outside temperature is **at or below** your outside limit |
-| **Turns off** | Inside temperature is **at or above** your inside threshold **plus** the hysteresis |
+| **Turns on** | Outside temperature is **at or below** your outside limit **and** inside temperature is **at or below** your inside threshold (or, with dew point protection, within the margin of the inside dew point) |
+| **Turns off** | Inside temperature is **at or above** your inside threshold **plus** the hysteresis (and, with dew point protection, at least margin + 1 °C above the inside dew point) |
 | **In between** | Leaves the device as it is |
 
 The automation re-checks every time either temperature sensor reports a new value.
@@ -26,6 +26,10 @@ The automation re-checks every time either temperature sensor reports a new valu
 - Shed at 9 °C → no change, so the heater doesn't flick on and off.
 - Shed at 7 °C but it's 12 °C outside → stays off.
 
+**Dew point protection (optional):** add an inside humidity sensor and the heater also comes on when the inside is close to its dew point, before condensation forms. Example — shed at 13.8 °C and 74 % humidity has a dew point of about 9 °C; with a 1.5 °C margin the heater comes on at about 10.5 °C even if your threshold is lower.
+
+**Confirm delay:** after switching, the automation waits (default 30 s), checks the device really changed, and sends the command once more if it didn't. Useful for cloud-controlled sockets that are slow or sometimes miss a command.
+
 **Manual control:** if you switch the device on by hand while it's already at or above threshold + hysteresis, it will be switched off at the next sensor reading.
 
 **Sensor dropouts:** if either sensor goes `unavailable` or `unknown`, nothing is switched until it reports a number again.
@@ -35,6 +39,7 @@ The automation re-checks every time either temperature sensor reports a new valu
 - Home Assistant **2024.8** or later.
 - The device as a `switch`, `fan`, `light` or `input_boolean` entity — for example the smart plug the heater is plugged into.
 - A temperature sensor inside, and one outside. If you don't have an outside sensor, select the inside one for both.
+- Optional: a humidity sensor inside, for dew point protection.
 
 ## Installing
 
@@ -62,6 +67,9 @@ The automation re-checks every time either temperature sensor reports a new valu
    | **Outside temperature limit** | Device won't turn on above this outside temperature. Set it high (e.g. 50 °C) to ignore the outside temperature |
    | **Inside temperature threshold** | Device turns on at or below this |
    | **Hysteresis** | How far above the threshold to heat before turning off |
+   | **Humidity Inside (optional)** | Humidity sensor in the room or shed, to turn on dew point protection. Leave empty for temperature only |
+   | **Dew point margin** | Turn on when the inside is within this many °C of its dew point (default 1.5 °C) |
+   | **Confirm delay** | Seconds to wait before checking the device switched, and retrying once (default 30 s, 0 to turn off) |
 
 4. Press **Save** and give the automation a name.
 

@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.3.0 — 2026-10-19
+
+### Added
+- **Optional dew point protection.** Pick an inside humidity sensor and the blueprint works out the inside dew point (Magnus formula). The device then also turns on when the inside temperature comes within the **dew point margin** (default 1.5 °C) of the dew point, to stop condensation, and only turns off once the inside is at threshold + hysteresis **and** at least margin + 1 °C above the dew point.
+- New inputs: **Humidity Inside (optional)** and **Dew point margin**.
+
+### Notes
+- Leave the humidity sensor empty and nothing changes: the blueprint works on temperature only, exactly as 1.2.x.
+- The outside temperature limit still applies to dew point switching.
+- The automation re-checks when either temperature sensor reports. Most combined temperature/humidity sensors report both together, so the humidity sensor isn't a separate trigger.
+
 ## 1.2.2 — 2026-10-18
 
 ### Changed
